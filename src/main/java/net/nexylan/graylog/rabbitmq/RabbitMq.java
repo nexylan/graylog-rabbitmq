@@ -43,7 +43,7 @@ public class RabbitMq implements MessageOutput{
 
         // Set up sender.
 
-        //sender = mysender...
+        sender = null;
 
         running = true;
     }
