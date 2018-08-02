@@ -43,7 +43,9 @@ public class RabbitMq implements MessageOutput{
 
         // Set up sender.
 
-        sender = null;
+        sender = new RabbitMQSender(
+                configuration.getString(RABBIT_HOST), configuration.getInt(RABBIT_PORT), configuration.getString(RABBIT_QUEUE)
+        );
 
         running = true;
     }
