@@ -80,7 +80,7 @@ public class RabbitMQSender implements Sender {
     public void send(Message message)
     {
         try {
-            this.channel.basicPublish("", this.queue, null, Message.FIELD_FULL_MESSAGE.getBytes());
+            this.channel.basicPublish("", this.queue, null, message.getField(Message.FIELD_FULL_MESSAGE).toString().getBytes());
         } catch (IOException e) {
             e.printStackTrace();
         }
