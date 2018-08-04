@@ -17,9 +17,5 @@
   "author": "Henri Devigne <henri.devigne@nexylan.com>",
   "license": "MIT",
   "dependencies": {
-  },
-  "devDependencies": {
-    "webpack": "^1.12.2",
-    "graylog-web-plugin": "file:../graylog2-server/graylog2-web-interface/packages/graylog-web-plugin"
   }
 }
