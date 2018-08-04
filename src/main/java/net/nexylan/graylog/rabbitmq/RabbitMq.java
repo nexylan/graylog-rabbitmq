@@ -115,12 +115,12 @@ public class RabbitMq implements MessageOutput{
 
             configurationRequest.addField(new NumberField(
                     RABBIT_PORT, "RabbitMQ Port", 5672,
-                    "Port of a Splunk instance",
+                    "Port of a RabbitMQ instance",
                     ConfigurationField.Optional.NOT_OPTIONAL)
             );
 
             configurationRequest.addField(new TextField(
-                    RABBIT_HOST, "RabbitMQ Queue", "my_queue",
+                    RABBIT_QUEUE, "RabbitMQ Queue", "my_queue",
                     "Name of the RabbitMQ Queue to push messages",
                     ConfigurationField.Optional.NOT_OPTIONAL)
             );
