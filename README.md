@@ -18,7 +18,7 @@ Restart `graylog-server` and you are done.
 Usage
 -----
 
-__To Write....__
+One the plugin installed, simply add an RabbitMQ output.  The port of the server must be the AMQP port (not the webgestion plugin)
 
 
 Getting started
