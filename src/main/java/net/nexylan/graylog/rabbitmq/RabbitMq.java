@@ -30,7 +30,7 @@ public class RabbitMq implements MessageOutput{
     private static final String RABBIT_PORT = "rabbit_port";
     private static final String RABBIT_QUEUE = "rabbit_queue";
 
-    private boolean running = true;
+    private boolean running;
 
     private final Sender sender;
 
@@ -41,8 +41,7 @@ public class RabbitMq implements MessageOutput{
             throw new MessageOutputConfigurationException("Missing configuration.");
         }
 
-        // Set up sender.
-
+        // Set up sender
         sender = new RabbitMQSender(
                 configuration.getString(RABBIT_HOST), configuration.getInt(RABBIT_PORT), configuration.getString(RABBIT_QUEUE)
         );
@@ -62,7 +61,7 @@ public class RabbitMq implements MessageOutput{
     }
 
     @Override
-    public void write(Message message) throws Exception {
+    public void write(Message message) {
         if (message == null || message.getFields() == null || message.getFields().isEmpty()) {
             return;
         }
@@ -75,7 +74,7 @@ public class RabbitMq implements MessageOutput{
     }
 
     @Override
-    public void write(List<Message> list) throws Exception {
+    public void write(List<Message> list) {
         if (list == null) {
             return;
         }
@@ -85,7 +84,7 @@ public class RabbitMq implements MessageOutput{
         }
     }
 
-    public boolean checkConfiguration(Configuration c) {
+    private boolean checkConfiguration(Configuration c) {
         return c.stringIsSet(RABBIT_HOST) && c.intIsSet(RABBIT_PORT) && c.stringIsSet(RABBIT_QUEUE);
     }
 
