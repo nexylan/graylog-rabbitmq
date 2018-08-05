@@ -18,9 +18,11 @@ public class RabbitMQSender implements Sender {
     private int port;
     private String queue;
 
+
     //RabbitMQ objects
     private Connection connection;
     private Channel channel;
+    private boolean lock;
 
     private static final Logger LOG = LoggerFactory.getLogger(RabbitMQSender.class);
 
@@ -31,13 +33,17 @@ public class RabbitMQSender implements Sender {
         this.host = host;
         this.port = port;
         this.queue = queue;
-
-        this.initialize();
+        initialize();
     }
 
     @Override
     public void initialize()
     {
+        if(lock){
+           return;
+        }
+        lock = true;
+
         ConnectionFactory factory;
         factory = new ConnectionFactory();
         factory.setHost(this.host);
@@ -69,6 +75,7 @@ public class RabbitMQSender implements Sender {
             e.printStackTrace();
         }
         this.is_initialized = true;
+        lock = false;
     }
 
     @Override
@@ -89,7 +96,8 @@ public class RabbitMQSender implements Sender {
             LOG.error("[RabbitMQ] An error occurred while closing the connection.");
             e.printStackTrace();
         }
-        is_initialized = false;
+        LOG.info("Stopping the output");
+
     }
 
     @Override
@@ -107,7 +115,7 @@ public class RabbitMQSender implements Sender {
     @Override
     public boolean isInitialized()
     {
-        return is_initialized;
+        return this.is_initialized;
     }
 
 }
