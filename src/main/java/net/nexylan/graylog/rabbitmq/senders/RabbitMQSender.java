@@ -89,6 +89,7 @@ public class RabbitMQSender implements Sender {
             LOG.error("[RabbitMQ] An error occurred while closing the connection.");
             e.printStackTrace();
         }
+        is_initialized = false;
     }
 
     @Override
