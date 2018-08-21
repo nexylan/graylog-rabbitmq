@@ -29,6 +29,8 @@ public class RabbitMq implements MessageOutput{
     private static final String RABBIT_HOST = "rabbit_host";
     private static final String RABBIT_PORT = "rabbit_port";
     private static final String RABBIT_QUEUE = "rabbit_queue";
+    private static final String RABBIT_USER = "rabbit_user";
+    private static final String RABBIT_PASSWORD = "rabbit_password";
 
     private boolean running;
 
@@ -43,7 +45,7 @@ public class RabbitMq implements MessageOutput{
 
         // Set up sender
         sender = new RabbitMQSender(
-                configuration.getString(RABBIT_HOST), configuration.getInt(RABBIT_PORT), configuration.getString(RABBIT_QUEUE)
+                configuration.getString(RABBIT_HOST), configuration.getInt(RABBIT_PORT), configuration.getString(RABBIT_QUEUE), configuration.getString(RABBIT_USER), configuration.getString(RABBIT_PASSWORD)
         );
 
         running = true;
@@ -85,7 +87,7 @@ public class RabbitMq implements MessageOutput{
     }
 
     private boolean checkConfiguration(Configuration c) {
-        return c.stringIsSet(RABBIT_HOST) && c.intIsSet(RABBIT_PORT) && c.stringIsSet(RABBIT_QUEUE);
+        return c.stringIsSet(RABBIT_HOST) && c.intIsSet(RABBIT_PORT) && c.stringIsSet(RABBIT_QUEUE) && c.stringIsSet(RABBIT_USER) && c.stringIsSet(RABBIT_PASSWORD);
     }
 
     @FactoryClass
@@ -121,6 +123,18 @@ public class RabbitMq implements MessageOutput{
             configurationRequest.addField(new TextField(
                     RABBIT_QUEUE, "RabbitMQ Queue", "my_queue",
                     "Name of the RabbitMQ Queue to push messages",
+                    ConfigurationField.Optional.NOT_OPTIONAL)
+            );
+
+            configurationRequest.addField(new TextField(
+                    RABBIT_USER, "RabbitMQ User", "guest",
+                    "Name of the RabbitMQ User ( guest is restricted to local )",
+                    ConfigurationField.Optional.NOT_OPTIONAL)
+            );
+
+            configurationRequest.addField(new TextField(
+                    RABBIT_PASSWORD, "RabbitMQ Password", "guest",
+                    "Password of the rabbitMQ user",
                     ConfigurationField.Optional.NOT_OPTIONAL)
             );
 
