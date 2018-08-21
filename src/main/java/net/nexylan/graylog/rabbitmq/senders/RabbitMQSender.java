@@ -17,6 +17,8 @@ public class RabbitMQSender implements Sender {
     private String host;
     private int port;
     private String queue;
+    private String user;
+    private String password;
 
 
     //RabbitMQ objects
@@ -28,11 +30,13 @@ public class RabbitMQSender implements Sender {
 
     private boolean is_initialized = false;
 
-    public RabbitMQSender(String host, int port, String queue)
+    public RabbitMQSender(String host, int port, String queue, String user, String password)
     {
         this.host = host;
         this.port = port;
         this.queue = queue;
+        this.user = user;
+        this.password = password;
         initialize();
     }
 
@@ -48,6 +52,8 @@ public class RabbitMQSender implements Sender {
         factory = new ConnectionFactory();
         factory.setHost(this.host);
         factory.setPort(this.port);
+        factory.setUsername(this.user);
+        factory.setPassword(this.password);
 
         try {
             this.connection = factory.newConnection();
@@ -104,7 +110,7 @@ public class RabbitMQSender implements Sender {
     public void send(Message message)
     {
         try {
-            this.channel.basicPublish("", this.queue, null, message.getField(Message.FIELD_FULL_MESSAGE).toString().getBytes());
+            this.channel.basicPublish("", this.queue, null, message.getMessage().getBytes());
         } catch (IOException e) {
             LOG.error("[RabbitMQ] An error occurred while publishing message.");
             e.printStackTrace();

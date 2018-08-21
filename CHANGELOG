@@ -1,0 +1,7 @@
+# 1.1.1
+
+    Fix bugs with fullmessage not supported on gentoo
+
+# 1.1.0
+
+Add authentication for the plugin
