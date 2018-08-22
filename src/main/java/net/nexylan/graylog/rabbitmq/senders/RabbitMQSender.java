@@ -1,5 +1,6 @@
 package net.nexylan.graylog.rabbitmq.senders;
 
+import com.rabbitmq.client.AMQP;
 import org.graylog2.plugin.Message;
 
 import com.rabbitmq.client.ConnectionFactory;
@@ -19,24 +20,28 @@ public class RabbitMQSender implements Sender {
     private String queue;
     private String user;
     private String password;
+    private int ttl;
 
 
     //RabbitMQ objects
     private Connection connection;
     private Channel channel;
     private boolean lock;
+    private AMQP.BasicProperties sendProperties;
+
 
     private static final Logger LOG = LoggerFactory.getLogger(RabbitMQSender.class);
 
     private boolean is_initialized = false;
 
-    public RabbitMQSender(String host, int port, String queue, String user, String password)
+    public RabbitMQSender(String host, int port, String queue, String user, String password, int ttl)
     {
         this.host = host;
         this.port = port;
         this.queue = queue;
         this.user = user;
         this.password = password;
+        this.ttl = ttl;
         initialize();
     }
 
@@ -80,6 +85,16 @@ public class RabbitMQSender implements Sender {
             LOG.error("[RabbitMQ] Impossible to declare the queue.");
             e.printStackTrace();
         }
+
+        AMQP.BasicProperties.Builder builder = new AMQP.BasicProperties.Builder();
+
+        if(this.ttl != -1)
+            builder.expiration(Integer.toString(this.ttl));
+
+        this.sendProperties = builder.build();
+
+
+
         this.is_initialized = true;
         lock = false;
     }
@@ -110,7 +125,7 @@ public class RabbitMQSender implements Sender {
     public void send(Message message)
     {
         try {
-            this.channel.basicPublish("", this.queue, null, message.getMessage().getBytes());
+            this.channel.basicPublish("", this.queue, this.sendProperties, message.getMessage().getBytes());
         } catch (IOException e) {
             LOG.error("[RabbitMQ] An error occurred while publishing message.");
             e.printStackTrace();

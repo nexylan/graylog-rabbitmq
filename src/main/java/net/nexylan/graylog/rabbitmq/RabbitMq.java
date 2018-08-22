@@ -31,6 +31,7 @@ public class RabbitMq implements MessageOutput{
     private static final String RABBIT_QUEUE = "rabbit_queue";
     private static final String RABBIT_USER = "rabbit_user";
     private static final String RABBIT_PASSWORD = "rabbit_password";
+    private static final String RABBIT_TTL = "rabbit_ttl";
 
     private boolean running;
 
@@ -45,7 +46,7 @@ public class RabbitMq implements MessageOutput{
 
         // Set up sender
         sender = new RabbitMQSender(
-                configuration.getString(RABBIT_HOST), configuration.getInt(RABBIT_PORT), configuration.getString(RABBIT_QUEUE), configuration.getString(RABBIT_USER), configuration.getString(RABBIT_PASSWORD)
+                configuration.getString(RABBIT_HOST), configuration.getInt(RABBIT_PORT), configuration.getString(RABBIT_QUEUE), configuration.getString(RABBIT_USER), configuration.getString(RABBIT_PASSWORD), configuration.getInt(RABBIT_TTL)
         );
 
         running = true;
@@ -87,7 +88,7 @@ public class RabbitMq implements MessageOutput{
     }
 
     private boolean checkConfiguration(Configuration c) {
-        return c.stringIsSet(RABBIT_HOST) && c.intIsSet(RABBIT_PORT) && c.stringIsSet(RABBIT_QUEUE) && c.stringIsSet(RABBIT_USER) && c.stringIsSet(RABBIT_PASSWORD);
+        return c.stringIsSet(RABBIT_HOST) && c.intIsSet(RABBIT_PORT) && c.stringIsSet(RABBIT_QUEUE) && c.stringIsSet(RABBIT_USER) && c.stringIsSet(RABBIT_PASSWORD) && c.intIsSet(RABBIT_TTL);
     }
 
     @FactoryClass
@@ -135,6 +136,12 @@ public class RabbitMq implements MessageOutput{
             configurationRequest.addField(new TextField(
                     RABBIT_PASSWORD, "RabbitMQ Password", "guest",
                     "Password of the rabbitMQ user",
+                    ConfigurationField.Optional.NOT_OPTIONAL)
+            );
+
+            configurationRequest.addField(new NumberField(
+                    RABBIT_TTL, "RabbitMQ TTL", -1,
+                    "The TTL of a message set -1 to disable",
                     ConfigurationField.Optional.NOT_OPTIONAL)
             );
 
