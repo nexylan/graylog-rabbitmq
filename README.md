@@ -8,7 +8,7 @@ __This plugin is an output plugin which permit to Graylog, to send logs to a Rab
 Installation
 ------------
 
-[Download the plugin](https://github.com/https://git.nexylan.net/hdevigne/graylog-rabbitmq/releases)
+Download the plugin which is in `dist` directory 
 and place the `.jar` file in your Graylog plugin directory. The plugin directory
 is the `plugins/` folder relative from your `graylog-server` directory by default
 and can be configured in your `graylog.conf` file.
