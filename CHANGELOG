@@ -1,7 +1,16 @@
+# 1.2.1
+
+    Change the way to define the ttl.
+    Now we use custom parameters when sending the message
+
+# 1.2.0
+
+    Add TTL management by editing the queue definition
+
 # 1.1.1
 
     Fix bugs with fullmessage not supported on gentoo
 
 # 1.1.0
 
-Add authentication for the plugin
+    Add  authentication for the plugin
