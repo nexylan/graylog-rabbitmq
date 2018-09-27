@@ -3,10 +3,7 @@ package net.nexylan.graylog.rabbitmq;
 import org.graylog2.plugin.Message;
 import org.graylog2.plugin.configuration.Configuration;
 import org.graylog2.plugin.configuration.ConfigurationRequest;
-import org.graylog2.plugin.configuration.fields.ConfigurationField;
-import org.graylog2.plugin.configuration.fields.DropdownField;
-import org.graylog2.plugin.configuration.fields.NumberField;
-import org.graylog2.plugin.configuration.fields.TextField;
+import org.graylog2.plugin.configuration.fields.*;
 import org.graylog2.plugin.inputs.annotations.ConfigClass;
 import org.graylog2.plugin.inputs.annotations.FactoryClass;
 import org.graylog2.plugin.outputs.MessageOutput;
@@ -32,6 +29,7 @@ public class RabbitMq implements MessageOutput{
     private static final String RABBIT_USER = "rabbit_user";
     private static final String RABBIT_PASSWORD = "rabbit_password";
     private static final String RABBIT_TTL = "rabbit_ttl";
+    private static final String RABBIT_DURABLE = "rabbit_durable";
 
     private boolean running;
 
@@ -46,7 +44,13 @@ public class RabbitMq implements MessageOutput{
 
         // Set up sender
         sender = new RabbitMQSender(
-                configuration.getString(RABBIT_HOST), configuration.getInt(RABBIT_PORT), configuration.getString(RABBIT_QUEUE), configuration.getString(RABBIT_USER), configuration.getString(RABBIT_PASSWORD), configuration.getInt(RABBIT_TTL)
+                configuration.getString(RABBIT_HOST),
+                configuration.getInt(RABBIT_PORT),
+                configuration.getString(RABBIT_QUEUE),
+                configuration.getString(RABBIT_USER),
+                configuration.getString(RABBIT_PASSWORD),
+                configuration.getInt(RABBIT_TTL),
+                configuration.getBoolean(RABBIT_DURABLE)
         );
 
         running = true;
@@ -144,6 +148,12 @@ public class RabbitMq implements MessageOutput{
                     "The TTL of a message set -1 to disable",
                     ConfigurationField.Optional.NOT_OPTIONAL)
             );
+
+            configurationRequest.addField(new BooleanField(RABBIT_DURABLE,
+                    "RabbitMQ Durable",
+                    true,
+                    "May this queue must be durable ?"
+            ));
 
             return configurationRequest;
         }

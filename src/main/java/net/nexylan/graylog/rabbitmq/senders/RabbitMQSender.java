@@ -21,6 +21,7 @@ public class RabbitMQSender implements Sender {
     private String user;
     private String password;
     private int ttl;
+    private boolean durable;
 
 
     //RabbitMQ objects
@@ -34,7 +35,7 @@ public class RabbitMQSender implements Sender {
 
     private boolean is_initialized = false;
 
-    public RabbitMQSender(String host, int port, String queue, String user, String password, int ttl)
+    public RabbitMQSender(String host, int port, String queue, String user, String password, int ttl, boolean durable)
     {
         this.host = host;
         this.port = port;
@@ -42,6 +43,7 @@ public class RabbitMQSender implements Sender {
         this.user = user;
         this.password = password;
         this.ttl = ttl;
+        this.durable = durable;
         initialize();
     }
 
@@ -79,7 +81,7 @@ public class RabbitMQSender implements Sender {
         }
 
         try {
-            this.channel.queueDeclare(this.queue, false, false, false, null);
+            this.channel.queueDeclare(this.queue, false, this.durable, false, null);
             LOG.info("[RabbitMQ] The queue have been successfully created.");
         } catch (IOException e) {
             LOG.error("[RabbitMQ] Impossible to declare the queue.");
