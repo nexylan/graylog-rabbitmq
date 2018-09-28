@@ -1,5 +1,6 @@
 package net.nexylan.graylog.rabbitmq.senders;
 
+import com.google.gson.Gson;
 import com.rabbitmq.client.AMQP;
 import org.graylog2.plugin.Message;
 
@@ -8,6 +9,7 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.Channel;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 public class RabbitMQSender implements Sender {
 
+    //Queue properties
     private String host;
     private int port;
     private String queue;
@@ -23,6 +26,8 @@ public class RabbitMQSender implements Sender {
     private int ttl;
     private boolean durable;
 
+    //Message properties
+    private int message_format;
 
     //RabbitMQ objects
     private Connection connection;
@@ -35,7 +40,7 @@ public class RabbitMQSender implements Sender {
 
     private boolean is_initialized = false;
 
-    public RabbitMQSender(String host, int port, String queue, String user, String password, int ttl, boolean durable)
+    public RabbitMQSender(String host, int port, String queue, String user, String password, int ttl, boolean durable, int message_format)
     {
         this.host = host;
         this.port = port;
@@ -44,6 +49,8 @@ public class RabbitMQSender implements Sender {
         this.password = password;
         this.ttl = ttl;
         this.durable = durable;
+        this.message_format = message_format;
+
         initialize();
     }
 
@@ -127,11 +134,27 @@ public class RabbitMQSender implements Sender {
     public void send(Message message)
     {
         try {
-            this.channel.basicPublish("", this.queue, this.sendProperties, message.getMessage().getBytes());
+            switch(this.message_format){
+                case 0:
+                    this.channel.basicPublish("", this.queue, this.sendProperties, message.getMessage().getBytes());
+                    break;
+                case 1:
+                    this.channel.basicPublish("", this.queue, this.sendProperties, this.formatToJson(message.getFields()).getBytes());
+                    break;
+            }
+
+
         } catch (IOException e) {
             LOG.error("[RabbitMQ] An error occurred while publishing message.");
             e.printStackTrace();
         }
+
+    }
+
+    private String formatToJson(Map<String, Object> data)
+    {
+        Gson gson = new Gson();
+        return gson.toJson(data);
 
     }
 
