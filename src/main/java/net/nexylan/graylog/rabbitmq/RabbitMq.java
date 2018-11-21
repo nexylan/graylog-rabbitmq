@@ -47,7 +47,6 @@ public class RabbitMq implements MessageOutput{
         //Convertir format to integer
         final Map<String, Integer> message_formats = ImmutableMap.of("message", 0, "json", 1);
 
-
         // Set up sender
         sender = new RabbitMQSender(
                 configuration.getString(RABBIT_HOST),

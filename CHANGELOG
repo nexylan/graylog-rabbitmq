@@ -1,7 +1,6 @@
 # 1.4.0
 
     Add the option to define the format of the RabbitMQ message.
-
     - JSON: All field are included ( included extracted ones )
     - Message: Just the logged message without information
 

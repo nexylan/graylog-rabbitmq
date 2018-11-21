@@ -101,9 +101,6 @@ public class RabbitMQSender implements Sender {
             builder.expiration(Integer.toString(this.ttl));
 
         this.sendProperties = builder.build();
-
-
-
         this.is_initialized = true;
         lock = false;
     }
@@ -127,7 +124,6 @@ public class RabbitMQSender implements Sender {
             e.printStackTrace();
         }
         LOG.info("Stopping the output");
-
     }
 
     @Override
@@ -142,20 +138,16 @@ public class RabbitMQSender implements Sender {
                     this.channel.basicPublish("", this.queue, this.sendProperties, this.formatToJson(message.getFields()).getBytes());
                     break;
             }
-
-
         } catch (IOException e) {
             LOG.error("[RabbitMQ] An error occurred while publishing message.");
             e.printStackTrace();
         }
-
     }
 
     private String formatToJson(Map<String, Object> data)
     {
         Gson gson = new Gson();
         return gson.toJson(data);
-
     }
 
     @Override
