@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  mongodb:
+    image: mongo:3
+  elasticsearch:
+    image: elasticsearch:6.6.1
+    environment:
+      http.host: 0.0.0.0
+      transport.host: localhost
+      network.host: 0.0.0.0
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+  graylog:
+    build: .
+    environment:
+      GRAYLOG_PASSWORD_SECRET: somepasswordpepper
+      # Password: admin
+      GRAYLOG_ROOT_PASSWORD_SHA2: 8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+      GRAYLOG_HTTP_BIND_ADDRESS: 0.0.0.0:9000
+      GRAYLOG_HTTP_EXTERNAL_URI: http://0.0.0.0:9000/
+    volumes:
+      - "./dist:/out-plugin"
+    links:
+      - mongodb:mongo
+    depends_on:
+      - mongodb
+      - elasticsearch
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: rabbit
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin

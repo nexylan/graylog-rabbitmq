@@ -14,4 +14,4 @@ build.config.js.sample
 graylog-rabbitmq
 .travis.yml
 .pom.xml.swp
-
+docker-compose.override.yml

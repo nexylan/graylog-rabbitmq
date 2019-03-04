@@ -1,0 +1,14 @@
+version: '3'
+
+# https://github.com/docker/compose/issues/2260#issuecomment-151365706
+# docker-compose up -d is enough because the .override is immediately found and applied.
+
+services:
+  graylog:
+    ports:
+      - "9000:9000"
+      - "514:514"
+      - "12201:12201"
+  rabbitmq:
+    ports:
+      - "15672:15672"
