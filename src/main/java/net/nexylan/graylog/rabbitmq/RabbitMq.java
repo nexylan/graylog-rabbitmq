@@ -1,5 +1,6 @@
 package net.nexylan.graylog.rabbitmq;
 
+import com.google.common.collect.ImmutableMap;
 import org.graylog2.plugin.Message;
 import org.graylog2.plugin.configuration.Configuration;
 import org.graylog2.plugin.configuration.ConfigurationRequest;
@@ -30,6 +31,7 @@ public class RabbitMq implements MessageOutput{
     private static final String RABBIT_PASSWORD = "rabbit_password";
     private static final String RABBIT_TTL = "rabbit_ttl";
     private static final String RABBIT_DURABLE = "rabbit_durable";
+    private static final String RABBIT_MESSAGE_FORMAT = "rabbit_message_format";
 
     private boolean running;
 
@@ -42,6 +44,9 @@ public class RabbitMq implements MessageOutput{
             throw new MessageOutputConfigurationException("Missing configuration.");
         }
 
+        //Convertir format to integer
+        final Map<String, Integer> message_formats = ImmutableMap.of("message", 0, "json", 1);
+
         // Set up sender
         sender = new RabbitMQSender(
                 configuration.getString(RABBIT_HOST),
@@ -50,7 +55,8 @@ public class RabbitMq implements MessageOutput{
                 configuration.getString(RABBIT_USER),
                 configuration.getString(RABBIT_PASSWORD),
                 configuration.getInt(RABBIT_TTL),
-                configuration.getBoolean(RABBIT_DURABLE)
+                configuration.getBoolean(RABBIT_DURABLE),
+                message_formats.get(configuration.getString(RABBIT_MESSAGE_FORMAT))
         );
 
         running = true;
@@ -154,6 +160,16 @@ public class RabbitMq implements MessageOutput{
                     true,
                     "May this queue must be durable ?"
             ));
+
+            final Map<String, String> formats = ImmutableMap.of("message", "Message", "json", "JSON ( all fields )");
+            configurationRequest.addField(new DropdownField(
+                    RABBIT_MESSAGE_FORMAT,
+                    "Message format",
+                    "message",
+                    formats,
+                    "Message format: Message only, or JSON which contains all fields including extracted ones",
+                    ConfigurationField.Optional.NOT_OPTIONAL)
+            );
 
             return configurationRequest;
         }

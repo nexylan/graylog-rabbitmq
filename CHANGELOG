@@ -1,3 +1,13 @@
+# 1.4.0
+
+    Add the option to define the format of the RabbitMQ message.
+    - JSON: All field are included ( included extracted ones )
+    - Message: Just the logged message without information
+
+# 1.3.0
+
+    Add the durable option for the queue in output configuration
+
 # 1.2.1
 
     Change the way to define the ttl.
