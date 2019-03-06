@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Not working json format message.
 
+### Security
+- Update dependencies's versions to fix: CVE-2018-12022, CVE-2017-17485, CVE-2018-7489, CVE-2017-7525, CVE-2018-11087
+
 ## 1.4.0
 ### Added
 - Option to define the format of the RabbitMQ message, JSON of all fields or Plain message
