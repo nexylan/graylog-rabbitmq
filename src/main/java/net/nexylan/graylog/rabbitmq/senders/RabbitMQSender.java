@@ -1,6 +1,8 @@
 package net.nexylan.graylog.rabbitmq.senders;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.rabbitmq.client.AMQP;
 import org.graylog2.plugin.Message;
 
@@ -138,16 +140,19 @@ public class RabbitMQSender implements Sender {
                     this.channel.basicPublish("", this.queue, this.sendProperties, this.formatToJson(message.getFields()).getBytes());
                     break;
             }
+        } catch (JsonProcessingException exception) {
+            LOG.error("[RabbitMQ] Impossible to format message to json.");
+            exception.printStackTrace();
         } catch (IOException e) {
             LOG.error("[RabbitMQ] An error occurred while publishing message.");
             e.printStackTrace();
         }
     }
 
-    private String formatToJson(Map<String, Object> data)
+    private String formatToJson(Map<String, Object> data) throws JsonProcessingException
     {
-        Gson gson = new Gson();
-        return gson.toJson(data);
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(data);
     }
 
     @Override

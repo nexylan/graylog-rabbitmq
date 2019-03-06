@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Fixed
+- Not working json format message.
 
 ## 1.4.0
 ### Added
