@@ -19,6 +19,9 @@ import net.nexylan.graylog.rabbitmq.senders.*;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * This is the plugin. Your class should implement one of the existing plugin
  * interfaces. (i.e. AlarmCallback, MessageInput, MessageOutput)
@@ -26,12 +29,15 @@ import java.util.Map;
 public class RabbitMq implements MessageOutput{
     private static final String RABBIT_HOST = "rabbit_host";
     private static final String RABBIT_PORT = "rabbit_port";
-    private static final String RABBIT_QUEUE = "rabbit_queue";
+    private static final String RABBIT_VHOST = "rabbit_vhost";
+    private static final String RABBIT_EXCHANGE = "rabbit_exchange";
     private static final String RABBIT_USER = "rabbit_user";
     private static final String RABBIT_PASSWORD = "rabbit_password";
     private static final String RABBIT_TTL = "rabbit_ttl";
-    private static final String RABBIT_DURABLE = "rabbit_durable";
+    private static final String RABBIT_ROUTING_KEY = "rabbit_routing_key";
     private static final String RABBIT_MESSAGE_FORMAT = "rabbit_message_format";
+
+    private static final Logger LOG = LoggerFactory.getLogger(RabbitMQSender.class);
 
     private boolean running;
 
@@ -39,10 +45,6 @@ public class RabbitMq implements MessageOutput{
 
     @Inject
     public RabbitMq(@Assisted Configuration configuration) throws MessageOutputConfigurationException {
-        // Check configuration.
-        if (!checkConfiguration(configuration)) {
-            throw new MessageOutputConfigurationException("Missing configuration.");
-        }
 
         //Convertir format to integer
         final Map<String, Integer> message_formats = ImmutableMap.of("message", 0, "json", 1);
@@ -51,11 +53,12 @@ public class RabbitMq implements MessageOutput{
         sender = new RabbitMQSender(
                 configuration.getString(RABBIT_HOST),
                 configuration.getInt(RABBIT_PORT),
-                configuration.getString(RABBIT_QUEUE),
+                configuration.getString(RABBIT_VHOST),
+                configuration.getString(RABBIT_EXCHANGE),
                 configuration.getString(RABBIT_USER),
                 configuration.getString(RABBIT_PASSWORD),
                 configuration.getInt(RABBIT_TTL),
-                configuration.getBoolean(RABBIT_DURABLE),
+                configuration.getString(RABBIT_ROUTING_KEY),
                 message_formats.get(configuration.getString(RABBIT_MESSAGE_FORMAT))
         );
 
@@ -97,10 +100,6 @@ public class RabbitMq implements MessageOutput{
         }
     }
 
-    private boolean checkConfiguration(Configuration c) {
-        return c.stringIsSet(RABBIT_HOST) && c.intIsSet(RABBIT_PORT) && c.stringIsSet(RABBIT_QUEUE) && c.stringIsSet(RABBIT_USER) && c.stringIsSet(RABBIT_PASSWORD) && c.intIsSet(RABBIT_TTL);
-    }
-
     @FactoryClass
     public interface Factory extends MessageOutput.Factory<RabbitMq> {
         @Override
@@ -132,8 +131,14 @@ public class RabbitMq implements MessageOutput{
             );
 
             configurationRequest.addField(new TextField(
-                    RABBIT_QUEUE, "RabbitMQ Queue", "my_queue",
-                    "Name of the RabbitMQ Queue to push messages",
+                    RABBIT_VHOST, "RabbitMQ Vhost", "",
+                    "Name of the RabbitMQ vhost to connect to",
+                    ConfigurationField.Optional.NOT_OPTIONAL)
+            );
+
+            configurationRequest.addField(new TextField(
+                    RABBIT_EXCHANGE, "RabbitMQ Exchange", "",
+                    "Name of the RabbitMQ Exchange to publish messages to",
                     ConfigurationField.Optional.NOT_OPTIONAL)
             );
 
@@ -151,15 +156,15 @@ public class RabbitMq implements MessageOutput{
 
             configurationRequest.addField(new NumberField(
                     RABBIT_TTL, "RabbitMQ TTL", -1,
-                    "The TTL of a message set -1 to disable",
+                    "The TTL of a message. Set the value to any negative number to disable.  Values are in milliseconds.",
                     ConfigurationField.Optional.NOT_OPTIONAL)
             );
 
-            configurationRequest.addField(new BooleanField(RABBIT_DURABLE,
-                    "RabbitMQ Durable",
-                    true,
-                    "May this queue must be durable ?"
-            ));
+            configurationRequest.addField(new TextField(
+                    RABBIT_ROUTING_KEY, "Queue Routing Key", "",
+                    "The queue routing key.",
+                    ConfigurationField.Optional.OPTIONAL)
+            );
 
             final Map<String, String> formats = ImmutableMap.of("message", "Message", "json", "JSON ( all fields )");
             configurationRequest.addField(new DropdownField(
