@@ -6,6 +6,6 @@ RUN cd /project
 
 RUN mvn package
 
-FROM graylog/graylog:3.0
+FROM graylog/graylog:3.3
 
 COPY --from=build /project/target/original-* /usr/share/graylog/plugin/
