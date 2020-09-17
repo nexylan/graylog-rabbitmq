@@ -3,31 +3,58 @@ version: '3'
 services:
   mongodb:
     image: mongo:3
+    container_name: mongo
+    networks:
+      - graylog
+
   elasticsearch:
-    image: elasticsearch:6.6.1
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.10
+    container_name: elasticsearch
     environment:
-      http.host: 0.0.0.0
-      transport.host: localhost
-      network.host: 0.0.0.0
-      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      - http.host=0.0.0.0
+      - transport.host=localhost
+      - network.host=0.0.0.0
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - graylog
+
   graylog:
-    build: .
+    image: graylog/graylog:3.3
+    container_name: graylog
     environment:
-      GRAYLOG_PASSWORD_SECRET: somepasswordpepper
+      # CHANGE ME (must be at least 16 characters)!
+      - GRAYLOG_PASSWORD_SECRET=somepasswordpepper
       # Password: admin
-      GRAYLOG_ROOT_PASSWORD_SHA2: 8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
-      GRAYLOG_HTTP_BIND_ADDRESS: 0.0.0.0:9000
-      GRAYLOG_HTTP_EXTERNAL_URI: http://0.0.0.0:9000/
+      - GRAYLOG_ROOT_PASSWORD_SHA2=8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9000/
+    networks:
+      - graylog
     volumes:
+      - "./dist:/usr/share/graylog/plugin"
       - "./dist:/out-plugin"
-    links:
-      - mongodb:mongo
+    ports:
+      - 9000:9000
+      - 12201:12201
+      - 1514:1514
     depends_on:
       - mongodb
       - elasticsearch
+
   rabbitmq:
     image: rabbitmq:3-management
-    hostname: rabbit
+    container_name: rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
+    ports:
+      - 15672:15672
+    networks:
+      - graylog
+
+networks:
+  graylog:
+    driver: bridge
