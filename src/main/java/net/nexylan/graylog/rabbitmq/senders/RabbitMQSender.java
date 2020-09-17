@@ -22,11 +22,12 @@ public class RabbitMQSender implements Sender {
     //Queue properties
     private String host;
     private int port;
-    private String queue;
+    private String vhost;
+    private String exchange;
     private String user;
     private String password;
     private int ttl;
-    private boolean durable;
+    private String routing_key;
 
     //Message properties
     private int message_format;
@@ -34,6 +35,7 @@ public class RabbitMQSender implements Sender {
     //RabbitMQ objects
     private Connection connection;
     private Channel channel;
+    private Channel dummy_channel;
     private boolean lock;
     private AMQP.BasicProperties sendProperties;
 
@@ -42,15 +44,16 @@ public class RabbitMQSender implements Sender {
 
     private boolean is_initialized = false;
 
-    public RabbitMQSender(String host, int port, String queue, String user, String password, int ttl, boolean durable, int message_format)
+    public RabbitMQSender(String host, int port, String vhost, String exchange, String user, String password, int ttl, String routing_key, int message_format)
     {
         this.host = host;
         this.port = port;
-        this.queue = queue;
+        this.vhost = vhost;
+        this.exchange = exchange;
         this.user = user;
         this.password = password;
         this.ttl = ttl;
-        this.durable = durable;
+        this.routing_key = routing_key;
         this.message_format = message_format;
 
         initialize();
@@ -68,19 +71,21 @@ public class RabbitMQSender implements Sender {
         factory = new ConnectionFactory();
         factory.setHost(this.host);
         factory.setPort(this.port);
+        factory.setVirtualHost(this.vhost);
         factory.setUsername(this.user);
         factory.setPassword(this.password);
 
         try {
             this.connection = factory.newConnection();
-            LOG.info("[RabbitMQ] Successfully connected to the server.");
+            LOG.info("[RabbitMQ] Successfully connected to vhost " + this.vhost + " on server " + this.host + ":" + this.port);
         } catch (IOException e) {
-            LOG.error("[RabbitMQ] Failed to connect to RabbitMQ Server.");
+            LOG.error("[RabbitMQ] Failed to connect to vhost " + this.vhost + " on server " + this.host + ":" + this.port);
             e.printStackTrace();
         } catch (TimeoutException e) {
             e.printStackTrace();
-            LOG.error("[RabbitMQ] The RabbitMQ Server timed out.");
+            LOG.error("[RabbitMQ] Time out connecting to vhost " + this.vhost + " on server " + this.host + ":" + this.port);
         }
+
         try {
             this.channel = this.connection.createChannel();
             LOG.info("[RabbitMQ] The channel have been successfully created.");
@@ -89,18 +94,42 @@ public class RabbitMQSender implements Sender {
             e.printStackTrace();
         }
 
+        // Attempt to declare the exchange.  If it already exists then capture the exception
         try {
-            this.channel.queueDeclare(this.queue, false, this.durable, false, null);
-            LOG.info("[RabbitMQ] The queue have been successfully created.");
-        } catch (IOException e) {
-            LOG.error("[RabbitMQ] Impossible to declare the queue.");
-            e.printStackTrace();
+            // Create a dummy channel.
+            this.dummy_channel = this.connection.createChannel();
+            this.dummy_channel.exchangeDeclarePassive(this.exchange);
+        } catch (IOException oe) {
+            try {
+                LOG.info("[RabbitMQ] Attempting to declare " + this.exchange + " as a direct, durable exchange (if it doesn't already exist)");
+                this.channel.exchangeDeclare(this.exchange, "direct", true);
+                try {
+                    this.dummy_channel.close();
+                } catch (TimeoutException ie) {
+                    LOG.error("[RabbitMQ] Timeout occurred while closing the channel.");
+                    ie.printStackTrace();
+                }
+            } catch (IOException e) {
+                LOG.error("[RabbitMQ] An error occurred declaring the exchange.");
+                e.printStackTrace();
+            }
+        }
+
+        if (this.routing_key == "") {
+            LOG.info("[RabbitMQ] Routing key was not specified.  Defaulting to an empty value.");
+            this.routing_key = "";
+        } else {
+            LOG.info("[RabbitMQ] Using routing key " + this.routing_key);
         }
 
         AMQP.BasicProperties.Builder builder = new AMQP.BasicProperties.Builder();
 
-        if(this.ttl != -1)
+        if (this.ttl >= 0) {
+            LOG.info("[RabbitMQ] Setting TTL to " + this.ttl);
             builder.expiration(Integer.toString(this.ttl));
+        } else {
+            LOG.info("[RabbitMQ] Disabling TTL");
+        }
 
         this.sendProperties = builder.build();
         this.is_initialized = true;
@@ -113,7 +142,7 @@ public class RabbitMQSender implements Sender {
         try {
             this.channel.close();
         } catch (TimeoutException e) {
-            LOG.error("[RabbitMQ] An error occurred while closing the channel.");
+            LOG.error("[RabbitMQ] Timeout while closing the channel.");
             e.printStackTrace();
         } catch (IOException e) {
             LOG.error("[RabbitMQ] An error occurred.");
@@ -134,10 +163,10 @@ public class RabbitMQSender implements Sender {
         try {
             switch(this.message_format){
                 case 0:
-                    this.channel.basicPublish("", this.queue, this.sendProperties, message.getMessage().getBytes());
+                    this.channel.basicPublish(this.exchange, this.routing_key, this.sendProperties, message.getMessage().getBytes());
                     break;
                 case 1:
-                    this.channel.basicPublish("", this.queue, this.sendProperties, this.formatToJson(message.getFields()).getBytes());
+                    this.channel.basicPublish(this.exchange, this.routing_key, this.sendProperties, this.formatToJson(message.getFields()).getBytes());
                     break;
             }
         } catch (JsonProcessingException exception) {
