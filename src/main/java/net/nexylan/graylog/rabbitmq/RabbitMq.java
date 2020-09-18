@@ -150,8 +150,9 @@ public class RabbitMq implements MessageOutput{
 
             configurationRequest.addField(new TextField(
                     RABBIT_PASSWORD, "RabbitMQ Password", "guest",
-                    "Password of the rabbitMQ user",
-                    ConfigurationField.Optional.NOT_OPTIONAL)
+                    "Password of the rabbitMQ user.  Default: guest",
+                    ConfigurationField.Optional.NOT_OPTIONAL,
+                    TextField.Attribute.IS_PASSWORD)
             );
 
             configurationRequest.addField(new NumberField(
