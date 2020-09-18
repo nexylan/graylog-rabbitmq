@@ -35,7 +35,6 @@ public class RabbitMQSender implements Sender {
     //RabbitMQ objects
     private Connection connection;
     private Channel channel;
-    private Channel dummy_channel;
     private boolean lock;
     private AMQP.BasicProperties sendProperties;
 
@@ -88,30 +87,37 @@ public class RabbitMQSender implements Sender {
 
         try {
             this.channel = this.connection.createChannel();
-            LOG.info("[RabbitMQ] The channel have been successfully created.");
+            LOG.info("[RabbitMQ] The channel has been successfully created.");
         } catch (IOException e) {
             LOG.error("[RabbitMQ] An error occurred during the channel creation.");
             e.printStackTrace();
         }
 
-        // Attempt to declare the exchange.  If it already exists then capture the exception
+        // Check to see if the exchange exists.  If it doesn't then try to declare it.
+        // If it does exist then just move along.
+        Channel dummy_channel = null;
         try {
             // Create a dummy channel.
-            this.dummy_channel = this.connection.createChannel();
-            this.dummy_channel.exchangeDeclarePassive(this.exchange);
-        } catch (IOException oe) {
+            dummy_channel = this.connection.createChannel();
+            LOG.info("[RabbitMQ] " + this.exchange + " exists. We'll use it.");
+
+            // exchangeDeclarePassive throws IOException -
+            // the server will raise a 404 channel exception if the named exchange does not exist.
+            dummy_channel.exchangeDeclarePassive(this.exchange);
+
+            // Close the channel
             try {
-                LOG.info("[RabbitMQ] Attempting to declare " + this.exchange + " as a direct, durable exchange (if it doesn't already exist)");
+                dummy_channel.close();
+            } catch (Exception e) {
+                LOG.error("[RabbitMQ] Exception occurred closing the dummy channel.", e);
+            }
+        } catch (IOException oe) {
+            // The exchange doesn't exist.  Try to declare it.
+            try {
+                LOG.info("[RabbitMQ] " + this.exchange + " does not exist. Will attempt to declare as a direct, durable exchange");
                 this.channel.exchangeDeclare(this.exchange, "direct", true);
-                try {
-                    this.dummy_channel.close();
-                } catch (TimeoutException ie) {
-                    LOG.error("[RabbitMQ] Timeout occurred while closing the channel.");
-                    ie.printStackTrace();
-                }
             } catch (IOException e) {
-                LOG.error("[RabbitMQ] An error occurred declaring the exchange.");
-                e.printStackTrace();
+                LOG.error("[RabbitMQ] An error occurred declaring the exchange." + this.exchange, e);
             }
         }
 
