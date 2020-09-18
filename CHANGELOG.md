@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## 1.5.0
+## 2.0.0
 ### Changed
 - Bumped the graylog image to 3.3
 - Increased the version of some of the images
