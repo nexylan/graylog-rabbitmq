@@ -1,6 +1,9 @@
 package net.nexylan.graylog.rabbitmq;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.assistedinject.Assisted;
+import net.nexylan.graylog.rabbitmq.senders.RabbitMQSender;
+import net.nexylan.graylog.rabbitmq.senders.Sender;
 import org.graylog2.plugin.Message;
 import org.graylog2.plugin.configuration.Configuration;
 import org.graylog2.plugin.configuration.ConfigurationRequest;
@@ -11,11 +14,7 @@ import org.graylog2.plugin.outputs.MessageOutput;
 import org.graylog2.plugin.outputs.MessageOutputConfigurationException;
 import org.graylog2.plugin.streams.Stream;
 
-import com.google.inject.assistedinject.Assisted;
 import javax.inject.Inject;
-
-import net.nexylan.graylog.rabbitmq.senders.*;
-
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +22,7 @@ import java.util.Map;
  * This is the plugin. Your class should implement one of the existing plugin
  * interfaces. (i.e. AlarmCallback, MessageInput, MessageOutput)
  */
-public class RabbitMq implements MessageOutput{
+public class RabbitMq implements MessageOutput {
     private static final String RABBIT_HOST = "rabbit_host";
     private static final String RABBIT_PORT = "rabbit_port";
     private static final String RABBIT_QUEUE = "rabbit_queue";
@@ -32,6 +31,7 @@ public class RabbitMq implements MessageOutput{
     private static final String RABBIT_TTL = "rabbit_ttl";
     private static final String RABBIT_DURABLE = "rabbit_durable";
     private static final String RABBIT_MESSAGE_FORMAT = "rabbit_message_format";
+    private static final String RABBIT_QUEUE_CLUSTER = "rabbit_queue_cluster";
 
     private boolean running;
 
@@ -56,6 +56,7 @@ public class RabbitMq implements MessageOutput{
                 configuration.getString(RABBIT_PASSWORD),
                 configuration.getInt(RABBIT_TTL),
                 configuration.getBoolean(RABBIT_DURABLE),
+                configuration.getBoolean(RABBIT_QUEUE_CLUSTER, false),
                 message_formats.get(configuration.getString(RABBIT_MESSAGE_FORMAT))
         );
 
@@ -79,7 +80,7 @@ public class RabbitMq implements MessageOutput{
             return;
         }
 
-        if(!sender.isInitialized()) {
+        if (!sender.isInitialized()) {
             sender.initialize();
         }
 
@@ -92,7 +93,7 @@ public class RabbitMq implements MessageOutput{
             return;
         }
 
-        for(Message m : list) {
+        for (Message m : list) {
             write(m);
         }
     }
@@ -159,6 +160,12 @@ public class RabbitMq implements MessageOutput{
                     "RabbitMQ Durable",
                     true,
                     "May this queue must be durable ?"
+            ));
+
+            configurationRequest.addField(new BooleanField(RABBIT_QUEUE_CLUSTER,
+                    "RabbitMQ use amqp cluster queue",
+                    true,
+                    "Create rabbitmq cluster queue or classic one ?"
             ));
 
             final Map<String, String> formats = ImmutableMap.of("message", "Message", "json", "JSON ( all fields )");
