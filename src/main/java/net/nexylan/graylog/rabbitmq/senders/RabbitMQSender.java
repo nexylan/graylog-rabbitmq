@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.*;
 import org.graylog2.plugin.Message;
+import org.joda.time.DateTime;
+import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -158,8 +160,15 @@ public class RabbitMQSender implements Sender {
     }
 
     private String formatToJson(Map<String, Object> data) throws JsonProcessingException {
+        Map<String, Object> updatedData = new HashMap<>();
+        data.forEach((s, o) -> {
+            if (o instanceof DateTime) {
+                o = ((DateTime) o).toString(ISODateTimeFormat.dateTime());
+            }
+            updatedData.put(s, o);
+        });
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(data);
+        return mapper.writeValueAsString(updatedData);
     }
 
     @Override
